@@ -22,53 +22,44 @@ RED = (255, 0, 0)
 # Game variables
 pacman_pos = [1, 1]
 ghost_pos = [5, 5]
-dots = [[x, y] for x in range(GRID_WIDTH) for y in range(GRID_HEIGHT) if (x, y) != (1, 1)]
+dots = [[x, y] for x in range(GRID_WIDTH) for y in range(GRID_HEIGHT) if (x, y) != (1, 1) and (x, y) != (5, 5)]
 score = 0
-ghost_tick_delay = 2 # Slightly faster ghost movement (lower value than before)
+ghost_tick_delay = 3  # Slightly faster ghost movement
 ghost_tick_counter = 0
 
 # Set up the display
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Pac-Man")
 
-# Function to draw the grid
 def draw_grid():
     for x in range(GRID_WIDTH):
         for y in range(GRID_HEIGHT):
             rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE)
             pygame.draw.rect(screen, BLACK, rect, 1)
 
-# Function to draw Pac-Man
 def draw_pacman():
     pacman_rect = pygame.Rect(pacman_pos[0] * GRID_SIZE, pacman_pos[1] * GRID_SIZE, GRID_SIZE, GRID_SIZE)
     pygame.draw.rect(screen, YELLOW, pacman_rect)
 
-# Function to draw ghost
 def draw_ghost():
     ghost_rect = pygame.Rect(ghost_pos[0] * GRID_SIZE, ghost_pos[1] * GRID_SIZE, GRID_SIZE, GRID_SIZE)
     pygame.draw.rect(screen, RED, ghost_rect)
 
-# Function to draw dots
 def draw_dots():
     for dot in dots:
         dot_rect = pygame.Rect(dot[0] * GRID_SIZE + GRID_SIZE // 4, dot[1] * GRID_SIZE + GRID_SIZE // 4, GRID_SIZE // 2, GRID_SIZE // 2)
         pygame.draw.rect(screen, WHITE, dot_rect)
 
-# Function to move the ghost towards Pac-Man using BFS
 def move_ghost_towards_pacman():
-    # Create a queue for BFS
     queue = deque([(ghost_pos[0], ghost_pos[1])])
     visited = set()
     visited.add((ghost_pos[0], ghost_pos[1]))
     parent = {}
-
-    # Perform BFS to find the shortest path to Pac-Man
     while queue:
         current = queue.popleft()
         if current == tuple(pacman_pos):
             break
-
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # Up, down, left, right
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             neighbor = (current[0] + dx, current[1] + dy)
             if (
                 0 <= neighbor[0] < GRID_WIDTH and
@@ -79,8 +70,6 @@ def move_ghost_towards_pacman():
                 queue.append(neighbor)
                 visited.add(neighbor)
                 parent[neighbor] = current
-
-    # Reconstruct the path and move the ghost
     if tuple(pacman_pos) in parent:
         path = []
         current = tuple(pacman_pos)
@@ -88,21 +77,17 @@ def move_ghost_towards_pacman():
             path.append(current)
             current = parent[current]
         path.reverse()
-        if path:  # Move one step along the path
+        if path:
             ghost_pos[0], ghost_pos[1] = path[0]
 
-# Main game loop
 def main():
     global pacman_pos, ghost_pos, dots, score, ghost_tick_counter
     clock = pygame.time.Clock()
     running = True
-    
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-
-        # Handle Pac-Man's movement
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and pacman_pos[0] > 0:
             pacman_pos[0] -= 1
@@ -112,29 +97,19 @@ def main():
             pacman_pos[1] -= 1
         if keys[pygame.K_DOWN] and pacman_pos[1] < GRID_HEIGHT - 1:
             pacman_pos[1] += 1
-
-        # Check for dot collection
         if pacman_pos in dots:
             dots.remove(pacman_pos)
             score += 1
-
-        # Check for win condition
         if not dots:
             print("You Win! Your score:", score)
             running = False
-
-        # Update the ghost's position only every `ghost_tick_delay` ticks
         ghost_tick_counter += 1
         if ghost_tick_counter >= ghost_tick_delay:
             move_ghost_towards_pacman()
             ghost_tick_counter = 0
-
-        # Check for game over
         if pacman_pos == ghost_pos:
             print("Game Over! Your score:", score)
             running = False
-
-        # Draw everything
         screen.fill(BLACK)
         draw_grid()
         draw_pacman()
@@ -142,9 +117,7 @@ def main():
         draw_dots()
         pygame.display.flip()
         clock.tick(FPS)
-
     pygame.quit()
 
-# Correct entry point for the program
 if __name__ == "__main__":
     main()
